@@ -198,7 +198,7 @@ class DataExtract:
         >>> extract.process_circuit_data(['n1=1 n2=2 R=50','n1=2 n2=0 C=5e-9'])
         [{'n1': 1, 'n2': 2, 'type': 'R', 'value': 50.0}, {'n1': 2, 'n2': 0, 'type': 'C', 'value': 5e-09}]
         >>> extract.process_circuit_data(['n1=1 n2=2 R=50','n1=2 n2=0 C=error'])
-        Value for 'C' is not in supported format: 'error'
+        Value in 'n1=2 n2=0 C=error' is not in supported format
         []
         """
         component_data = []
