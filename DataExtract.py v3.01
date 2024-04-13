@@ -169,12 +169,16 @@ class DataExtract:
             except ValueError:
                 # Attempt this conversion again using the powers of 10 prefix
                 try:
+                    count = 0
                     for fix, exp in self.conversionDict.items():
                         if fix in value:
+                            count +=1
                             new_value = value + exp
                             new_value = new_value.replace(fix,'')
                             val_dict['value'] = float(new_value)
                             val_dict['type'] = str(name)
+                    if count ==0:
+                        raise ValueError
                 except ValueError:
                     #This will occur if a component has an incompatable type or value
                     print(f"Value for '{name}' is not in supported format: '{value}'")
