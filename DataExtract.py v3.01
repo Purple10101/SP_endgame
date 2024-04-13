@@ -7,8 +7,9 @@
 #                   Each section is then parsed and processed.
 #                   There are many helper functions that compliment the primary read_file method which didctates the folw of operation.
 #                   Docstrings at the start of helper functions contain doctests.
+#                   This iteration fixes a bug that was able to occur when incorrect component syntax was provided
 #
-#   Version:        v3.01
+#   Version:        v3.02
 #   Date:           13/04/2024
 #   Authors:        Joshua O Poole
 ##############################################################################################################################################
@@ -209,17 +210,23 @@ class DataExtract:
         # Components can be defined as a line in the circuit section
         for component in circuit_data:
             # Isolate all matches in the component line
-            pattern = r'^(.*?)(\s\w+=\d+(?:\.\d+)?(?:e[+-]?\d+)?\s?[numkMG]?[HVA]?)$'
+            pattern = r'^(.*?)(\s\w+=(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?|[a-zA-Z]+)\s?[numkMG]?[HVA]?)$'
             match = re.search(pattern, component)
             nodes_string = match.group(1)
             value_string = match.group(2).replace(' ','')
             matches_nodes = re.findall(pattern_nodes, nodes_string)
             matches_value = re.findall(pattern_value, value_string)
-            # Iterate through each match of the RegEx
-            nodes = self.node_helper(matches_nodes)
-            val = self.value_helper(matches_value)
-            combined_dict = {**nodes, **val}
-            component_data.append(combined_dict)
+            if matches_nodes and matches_value:
+                # Iterate through each match of the RegEx
+                nodes = self.node_helper(matches_nodes)
+                val = self.value_helper(matches_value)
+                combined_dict = {**nodes, **val}
+                component_data.append(combined_dict)
+            else:
+                #This will occur if a component has an incompatable type or value
+                print(f"Value in '{component}' is not in supported format")
+                component_data = []
+                return component_data
         return component_data
 
     def process_terms_data(self,terms_data):
@@ -280,6 +287,8 @@ class DataExtract:
                 variables[name] = str(unit)
         return variables
     
+
+Txt_Data = DataExtract('b_RC.net')
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
