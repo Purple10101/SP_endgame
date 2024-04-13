@@ -59,6 +59,15 @@ class DataExtract:
 
     def __init__(self, file_name):
         self.file_name = file_name
+        self.conversionDict = {
+            'p': 'e-12',
+            'n': 'e-9',
+            'u': 'e-6',
+            'm': 'e-3',
+            'k': 'e3',
+            'M': 'e6',
+            'G': 'e9'
+        }
         self.read_file()
 
     def read_file(self):
@@ -134,6 +143,44 @@ class DataExtract:
                 data.append(line)
         return data
     
+
+    def node_helper(self, matches):
+        node_dict = {}
+        for name, value in matches:
+            node_dict[name] = int(value)
+        return node_dict
+    
+    def value_helper(self, matches):
+        val_dict = {}
+        for name, value in matches:
+            try: 
+            # Store the component value and type and store each of them in the variables dict
+                compVal = float(value)
+                type = str(name)
+                val_dict['type'] = type
+                val_dict['value'] = compVal
+            except ValueError:
+                # Attempt this conversion again using the powers of 10 prefix
+                try:
+                    count = 0
+                    for fix, exp in self.conversionDict.items():
+                        if fix in value:
+                            count +=1
+                            new_value = value + exp
+                            new_value = new_value.replace(fix,'')
+                            val_dict['value'] = float(new_value)
+                            val_dict['type'] = str(name)
+                    if count ==0:
+                        raise ValueError
+                except ValueError:
+                    #This will occur if a component has an incompatable type or value
+                    print(f"Value for '{name}' is not in supported format: '{value}'")
+                    component_data = []
+                    return component_data
+        return val_dict
+
+
+
     def process_circuit_data(self, circuit_data):
         """
         Store the circuit data in list of dict
@@ -148,33 +195,24 @@ class DataExtract:
         """
         component_data = []
         # Define regular extression that matches the formatting of the input file
-        pattern = r'(\w+)=(\S+)'
+        pattern_nodes = r'(\w+)=(\S+)'
+        pattern_value = r'(\w+)=(\d+(?:\.\d+)?(?:e[+-]?\d+)?[numkMG]?[HVA]?)'
+
         # Iterate through each component in the circuit
         # Components can be defined as a line in the circuit section
         for component in circuit_data:
             # Isolate all matches in the component line
-            matches = re.findall(pattern, component)
-            variables = {}
+            pattern = r'^(.*?)(\s\w+=\d+(?:\.\d+)?(?:e[+-]?\d+)?\s?[numkMG]?[HVA]?)$'
+            match = re.search(pattern, component)
+            nodes_string = match.group(1)
+            value_string = match.group(2).replace(' ','')
+            matches_nodes = re.findall(pattern_nodes, nodes_string)
+            matches_value = re.findall(pattern_value, value_string)
             # Iterate through each match of the RegEx
-            for name, value in matches:
-                # The nodes need to be processed differently to the type and value
-                if name != 'n1' and name != 'n2':
-                    try: 
-                        # Store the component value and type and store each of them in the variables dict
-                        compVal = float(value)
-                        type = str(name)
-                        variables['type'] = type
-                        variables['value'] = compVal
-                    except ValueError:
-                        # This will occur if a component has an incompatable type or value
-                        print(f"Value for '{name}' is not in supported format: '{value}'")
-                        component_data = []
-                        return component_data
-                else:
-                    # In case where the match is a node value store in variables dict
-                    variables[name] = int(value)
-            # Append the varaibles dict to the component_data list
-            component_data.append(variables)
+            nodes = self.node_helper(matches_nodes)
+            val = self.value_helper(matches_value)
+            combined_dict = {**nodes, **val}
+            component_data.append(combined_dict)
         return component_data
 
     def process_terms_data(self,terms_data):
