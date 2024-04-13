@@ -3,8 +3,8 @@
 #   Summary:        Acceses the calculated results of a circuit and format and export them accoring to spec.
 #   Description:    This file contains the CircResultsExporter class which takes as argument a circuit instance and ordered output peramiters.
 #                   The main method is export_to_csv which takes as argument the file path where ther output is to be saved.
-#                   This method first formats and scales values by prefixes where neccesary and 
-#                   the headers of the output table and then populates it with the calculated values,
+#                   This method first formats the headers of the output table and then populates it with the calculated values
+#                   scaled by prefixes if present,
 #                   whilst all values are alligned by the comma at the enbd of the variable.
 #                   Docstrings at the start of helper functions contain doctests.
 #
