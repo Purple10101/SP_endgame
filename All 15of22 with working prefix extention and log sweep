@@ -55,6 +55,21 @@ class DataExtract:
         INPUT: [circuit,terms,outupt]_section string
         OUTPUT: [circuit,terms,outupt]_data list:string
 
+    :def node_helper
+
+        Store the data found in the regEx matches identified as nodes
+
+        INPUT: matches list:string
+        OUTPUT: node_dict:Dict
+
+    :def value_helper
+
+        Store the data found in the regEx matches identified as type=value
+        with added support for prefixes
+
+        INPUT: matches list:string
+        OUTPUT: val_dict:Dict
+    
     :def process_[circuit,terms,outupt]_section
 
         Store the data found in the regEx matches in apropriate data structures
