@@ -6,10 +6,18 @@ import re
 import cmath
 import csv
 
+##################################################################################################
+#ComponentTypeException
+##################################################################################################
+
 class ComponentTypeException(Exception):
     def __init__(self):
         # Initialize the Exception base class with a custom message
         super().__init__()
+
+##################################################################################################
+#DataExtract
+##################################################################################################
 
 class DataExtract:
 
@@ -202,17 +210,23 @@ class DataExtract:
         # Components can be defined as a line in the circuit section
         for component in circuit_data:
             # Isolate all matches in the component line
-            pattern = r'^(.*?)(\s\w+=\d+(?:\.\d+)?(?:e[+-]?\d+)?\s?[numkMG]?[HVA]?)$'
+            pattern = r'^(.*?)(\s\w+=(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?|[a-zA-Z]+)\s?[numkMG]?[HVA]?)$'
             match = re.search(pattern, component)
             nodes_string = match.group(1)
             value_string = match.group(2).replace(' ','')
             matches_nodes = re.findall(pattern_nodes, nodes_string)
             matches_value = re.findall(pattern_value, value_string)
-            # Iterate through each match of the RegEx
-            nodes = self.node_helper(matches_nodes)
-            val = self.value_helper(matches_value)
-            combined_dict = {**nodes, **val}
-            component_data.append(combined_dict)
+            if matches_nodes and matches_value:
+                # Iterate through each match of the RegEx
+                nodes = self.node_helper(matches_nodes)
+                val = self.value_helper(matches_value)
+                combined_dict = {**nodes, **val}
+                component_data.append(combined_dict)
+            else:
+                #This will occur if a component has an incompatable type or value
+                print(f"Value in '{component}' is not in supported format")
+                component_data = []
+                return component_data
         return component_data
 
     def process_terms_data(self,terms_data):
@@ -272,7 +286,12 @@ class DataExtract:
                 # Store match in variables dict as string-string
                 variables[name] = str(unit)
         return variables
-           
+
+
+##################################################################################################
+#Impedance
+##################################################################################################
+
 class Impedance:
 
     """
@@ -337,6 +356,11 @@ class Impedance:
         else:
                 in_node = min(self.Pin1,self.Pin2)
         return in_node
+
+
+##################################################################################################
+#FreqDepImpedence
+##################################################################################################
 
 class FreqDepImpedence(Impedance):
 
@@ -410,6 +434,11 @@ class FreqDepImpedence(Impedance):
         else:
                 in_node = min(self.Pin1,self.Pin2)
         return in_node
+
+
+##################################################################################################
+#Circ
+##################################################################################################
 
 class Circ:
 
@@ -583,7 +612,12 @@ class Circ:
             Outputs[F] = Inter
 
         return Outputs
-                
+
+
+##################################################################################################
+#CircResultsExporter
+##################################################################################################
+
 class CircResultsExporter:
 
     """
@@ -742,8 +776,13 @@ class CircResultsExporter:
         print(f'CSV file has been saved to {file_path}')
 
 
+
+##################################################################################################
+#Main
+##################################################################################################
+
+
 def errorexporter(file_path):
-    # Create an empty DataFrame
     with open(file_path, 'w', newline='') as output_file:
             output_file.write() 
 
@@ -758,11 +797,13 @@ input_file = sys.argv[1]
 output_file = sys.argv[2]
 Txt_Data = DataExtract(input_file)
 try:
-    freq = numpy.linspace(Txt_Data.formatted_Term_Values['Fstart'], Txt_Data.formatted_Term_Values['Fend'], Txt_Data.formatted_Term_Values['Nfreqs'])
+    try:
+        freq = numpy.linspace(Txt_Data.formatted_Term_Values['Fstart'], Txt_Data.formatted_Term_Values['Fend'], Txt_Data.formatted_Term_Values['Nfreqs'])
+    except Exception:
+        freq = numpy.logspace(numpy.log10(Txt_Data.formatted_Term_Values['LFstart']), numpy.log10(Txt_Data.formatted_Term_Values['LFend']), Txt_Data.formatted_Term_Values['Nfreqs'])
 except Exception:
     errorexporter(output_file)
 
-#frequencies= [round(F, -int(math.floor(math.log10(abs(F)))) + (3)) for F in freq]
 frequencies = freq
 
 components = []
