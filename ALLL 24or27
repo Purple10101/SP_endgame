@@ -219,13 +219,13 @@ class DataExtract:
         component_data = []
         # Define regular extression that matches the formatting of the input file
         pattern_nodes = r'(\w+)=(\S+)'
-        pattern_value = r'(\w+)=(\d+(?:\.\d+)?(?:e[+-]?\d+)?[numkMG]?[HVA]?)'
+        pattern_value = r'(\w+)=(\d+(?:\.\d+)?(?:e[+-]?\d+)?[numkMG]?)'
 
         # Iterate through each component in the circuit
         # Components can be defined as a line in the circuit section
         for component in circuit_data:
             # Isolate all matches in the component line
-            pattern = r'^(.*?)(\s\w+=(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?|[a-zA-Z]+)\s?[numkMG]?[HVA]?)$'
+            pattern = r'^(.*?)(\s\w+=(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?|[a-zA-Z]+)\s?[numkMG]?)$'
             match = re.search(pattern, component)
             nodes_string = match.group(1)
             value_string = match.group(2).replace(' ','')
