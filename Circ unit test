@@ -1,0 +1,52 @@
+import unittest
+from unittest.mock import Mock
+from TestEnv import DataExtract, Impedance, FreqDepImpedence, Circ
+
+def create_impedance_mock(pin1, pin2, value, type):
+    impedance = Mock()
+    impedance.Pin1 = pin1
+    impedance.Pin2 = pin2
+    impedance.Value = value
+    impedance.Type = type
+    impedance.In_node = max(pin1, pin2) if min(pin1, pin2) == 0 else min(pin1, pin2)
+    impedance.MAT_GEN = Mock(return_value=[[1, 0], [0, 1]])  # Identity matrix for simplicity
+    return impedance
+
+class TestCirc(unittest.TestCase):
+
+    def test_order_components(self):
+        # Test case 1
+        components = [
+        create_impedance_mock(2, 0, 0.02, 'G'),
+        create_impedance_mock(1, 2, 50, 'R')
+        ]
+        expected_order = [
+        create_impedance_mock(1, 2, 50, 'R'),  # Resistor first (In_node 1)
+        create_impedance_mock(2, 0, 0.02, 'G')  # Conductance second (In_node 2)
+        ]
+        freq = [50]
+        circuit = Circ(components_list=components, Freq=freq, LoadRes=100, Vth=5, Rs=50)
+        ordered_components = circuit.Order_components()
+        self.assertEqual(ordered_components, expected_order)
+
+        # Test case 2
+        components = [
+        create_impedance_mock(4, 0, 50, 'R'),
+        create_impedance_mock(1, 2, 0.02, 'G'),
+        create_impedance_mock(5, 6, 0.0002, 'C'),
+        create_impedance_mock(2, 3, 0.0002, 'L'),
+        create_impedance_mock(3, 4, 0.0002, 'G'),
+        create_impedance_mock(4, 5, 0.0002, 'G')
+        ]
+        expected_order = [
+        create_impedance_mock(1, 2, 0.02, 'G'),
+        create_impedance_mock(2, 3, 0.0002, 'L'),
+        create_impedance_mock(3, 4, 0.0002, 'R'),
+        create_impedance_mock(4, 0, 50, 'R'),
+        create_impedance_mock(4, 5, 0.0002, 'G'),
+        create_impedance_mock(5, 6, 0.0002, 'G')
+        ]
+# More tests can be added here
+
+if __name__ == '__main__':
+    unittest.main()
